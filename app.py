@@ -4,6 +4,7 @@ import mysql.connector
 import random
 import io
 from flask import flash
+from datetime import timedelta
 
 
 app = Flask(__name__)
@@ -324,7 +325,12 @@ def appointments():
 @app.route("/book-appointment", methods=["POST"])
 def book_appointment():
     doctor_name = request.form.get("doctor_name")
-    flash(f"Appointment booked with Dr. {doctor_name}!")
+
+    # Generate random date within the next 7 days
+    days_ahead = random.randint(1, 7)
+    appointment_date = (datetime.now() + timedelta(days=days_ahead)).strftime("%B %d, %Y")
+
+    flash(f"✅ Appointment booked with Dr. {doctor_name} on {appointment_date}!", "success")
     return redirect(url_for("appointments"))
 
 @app.route("/profile")

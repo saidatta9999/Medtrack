@@ -1,7 +1,7 @@
 # FINAL FULL VERSION: MedTrack app.py (DynamoDB + SNS + S3)
 
 from flask import Flask, render_template, request, redirect, session, url_for, send_file, flash
-from datetime import datetime, date
+from datetime import datetime, date, timedelta
 import boto3
 import uuid
 import io
@@ -203,13 +203,17 @@ def delete_task(task_id):
 
 @app.route('/complete-task/<string:task_id>', methods=['POST'])
 def complete_task(task_id):
+    current = tasks_table.get_item(Key={'user_id': session['user_id'], 'task_id': task_id})
+    current_completed = current['Item'].get('completed', False)
+    
     tasks_table.update_item(
         Key={'user_id': session['user_id'], 'task_id': task_id},
         UpdateExpression='SET completed = :val',
-        ExpressionAttributeValues={':val': True}
+        ExpressionAttributeValues={':val': not current_completed}
     )
-    sns.publish(TopicArn=sns_topic_arn, Subject='Task Completed', Message='A task was completed in MedTrack.')
+    sns.publish(TopicArn=sns_topic_arn, Subject='Task Completed', Message='A task status changed in MedTrack.')
     return '', 204
+
 
 @app.route('/doctor')
 def doctor():
@@ -248,8 +252,11 @@ def appointments():
 @app.route("/book-appointment", methods=["POST"])
 def book_appointment():
     doctor_name = request.form.get("doctor_name")
-    flash(f"Appointment booked with Dr. {doctor_name}!")
+    days_ahead = random.randint(1, 7)
+    appointment_date = (datetime.now() + timedelta(days=days_ahead)).strftime("%B %d, %Y")
+    flash(f"✅ Appointment booked with Dr. {doctor_name} on {appointment_date}!", "success")
     return redirect(url_for("appointments"))
+
 
 @app.route('/profile')
 def profile():
@@ -282,4 +289,4 @@ def logout():
     return redirect('/')
 
 if __name__ == '__main__':
-    app.run(debug=True)
+    app.run(debug=True, host='0.0.0.0',port=5000)
