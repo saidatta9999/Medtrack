@@ -1,19 +1,17 @@
-from flask import Flask, render_template, request, redirect, url_for, session, send_file
-from datetime import date, datetime
+from flask import Flask, render_template, request, redirect, url_for, session, send_file, flash
+from datetime import date, datetime, timedelta
 import mysql.connector
 import random
 import io
-from flask import flash
-from datetime import timedelta
-
 
 app = Flask(__name__)
 app.secret_key = 'your_secret_key'
 
+# Database configuration
 db_config = {
     "host": "localhost",
     "user": "root",
-    "password": "",
+    "password": "040901",
     "database": "medtrack"
 }
 
@@ -340,7 +338,7 @@ def profile():
 
     user_id = session["user_id"]
     cursor = db.cursor(dictionary=True)
-    cursor.execute("SELECT * FROM user_profile WHERE user_id = %s", (user_id,))
+    cursor.execute("SELECT * FROM users WHERE id = %s", (user_id,))
     user = cursor.fetchone()
     return render_template("profile.html", user=user)
 
@@ -360,23 +358,12 @@ def save_user():
     drinking = True if request.form.get("drinking") == "on" else False
 
     cursor = db.cursor()
-    cursor.execute("SELECT * FROM user_profile WHERE user_id = %s", (user_id,))
-    existing = cursor.fetchone()
-
-    if existing:
-        cursor.execute("""
-            UPDATE user_profile SET
+    cursor.execute("""
+        UPDATE users SET
             name=%s, email=%s, age=%s, gender=%s, blood_group=%s,
             medical_conditions=%s, smoking=%s, drinking=%s
-            WHERE user_id=%s
-        """, (name, email, age, gender, blood_group,
-              medical_conditions, smoking, drinking, user_id))
-    else:
-        cursor.execute("""
-            INSERT INTO user_profile 
-            (user_id, name, email, age, gender, blood_group, medical_conditions, smoking, drinking)
-            VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s)
-        """, (user_id, name, email, age, gender, blood_group, medical_conditions, smoking, drinking))
+        WHERE id=%s
+    """, (name, email, age, gender, blood_group, medical_conditions, smoking, drinking, user_id))
 
     db.commit()
     return redirect("/profile")

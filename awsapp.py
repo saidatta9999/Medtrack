@@ -1,13 +1,9 @@
-# FINAL FULL VERSION: MedTrack app.py (DynamoDB + SNS + S3)
-
-from flask import Flask, render_template, request, redirect, session, url_for, send_file, flash
+from flask import Flask, render_template, request, redirect, session, url_for, flash
 from datetime import datetime, date, timedelta
 import boto3
 import uuid
-import io
-import os
-from werkzeug.utils import secure_filename
 import random
+from werkzeug.utils import secure_filename
 
 app = Flask(__name__)
 app.secret_key = 'your_secret_key'
@@ -16,11 +12,9 @@ app.secret_key = 'your_secret_key'
 region = 'us-east-1'
 dynamodb = boto3.resource('dynamodb', region_name=region)
 sns = boto3.client('sns', region_name=region)
-s3 = boto3.client('s3', region_name=region)
 
-# AWS Resources
+# Replace with your actual topic ARN and AWS account ID
 sns_topic_arn = 'arn:aws:sns:us-east-1:YOUR_ACCOUNT_ID:MedTrackAlerts'
-s3_bucket = 'your-s3-bucket-name'  # Replace with actual bucket name
 
 # DynamoDB Tables
 users_table = dynamodb.Table('medtrack_users')
@@ -28,7 +22,7 @@ medicines_table = dynamodb.Table('medtrack_medicines')
 tasks_table = dynamodb.Table('medtrack_tasks')
 doctor_details_table = dynamodb.Table('medtrack_doctor_details')
 doctor_list_table = dynamodb.Table('medtrack_doctor_list')
-profile_table = dynamodb.Table('medtrack_user_profile')
+
 
 @app.route('/')
 def home():
@@ -205,7 +199,7 @@ def delete_task(task_id):
 def complete_task(task_id):
     current = tasks_table.get_item(Key={'user_id': session['user_id'], 'task_id': task_id})
     current_completed = current['Item'].get('completed', False)
-    
+
     tasks_table.update_item(
         Key={'user_id': session['user_id'], 'task_id': task_id},
         UpdateExpression='SET completed = :val',
@@ -213,7 +207,6 @@ def complete_task(task_id):
     )
     sns.publish(TopicArn=sns_topic_arn, Subject='Task Completed', Message='A task status changed in MedTrack.')
     return '', 204
-
 
 @app.route('/doctor')
 def doctor():
@@ -257,12 +250,11 @@ def book_appointment():
     flash(f"✅ Appointment booked with Dr. {doctor_name} on {appointment_date}!", "success")
     return redirect(url_for("appointments"))
 
-
 @app.route('/profile')
 def profile():
     if 'user_id' not in session:
         return redirect('/login')
-    prof = profile_table.get_item(Key={'user_id': session['user_id']})
+    prof = users_table.get_item(Key={'user_id': session['user_id']})
     return render_template('profile.html', user=prof.get('Item'))
 
 @app.route('/save_user', methods=['POST'])
@@ -270,7 +262,7 @@ def save_user():
     if 'user_id' not in session:
         return redirect('/login')
 
-    profile_table.put_item(Item={
+    users_table.put_item(Item={
         'user_id': session['user_id'],
         'name': request.form['name'],
         'email': request.form['email'],
@@ -289,4 +281,4 @@ def logout():
     return redirect('/')
 
 if __name__ == '__main__':
-    app.run(debug=True, host='0.0.0.0',port=5000)
+    app.run(debug=True, host='0.0.0.0', port=5000)
