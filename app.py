@@ -11,7 +11,7 @@ app.secret_key = 'your_secret_key'
 db_config = {
     "host": "localhost",
     "user": "root",
-    "password": "040901",
+    "password": "",
     "database": "medtrack"
 }
 
