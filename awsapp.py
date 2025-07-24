@@ -118,11 +118,36 @@ def add_medicine():
         }
         medicines_table.put_item(Item=data)
 
-        sns.publish(TopicArn=sns_topic_arn, Subject='New Medicine Added',
-                    Message=f"Medicine '{data['name']}' has been added to your MedTrack dashboard.")
+        # 📨 Informative email message
+        email_message = f"""
+Hello,
+
+✅ A new medicine has been added to your MedTrack dashboard.
+
+🩺 **Medicine Details:**
+- Name: {data['name']}
+- Dosage: {data['dosage']}
+- Time to take: {data['time']}
+- Start Date: {data['start_date']}
+- End Date: {data['end_date']}
+
+We’ll remind you when it’s time to take your medicine.
+
+Stay healthy!  
+– MedTrack Team
+"""
+
+        # Send via SNS
+        sns.publish(
+            TopicArn=sns_topic_arn,
+            Subject='🆕 New Medicine Added to MedTrack',
+            Message=email_message
+        )
+
         return redirect('/dashboard')
 
     return render_template('add_medicine.html')
+
 
 @app.route('/edit/<string:med_id>', methods=['GET', 'POST'])
 def edit_medicine(med_id):
