@@ -1,0 +1,117 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>Edit Medicine</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      background: #b0bedc; /* slightly darker pale blue background */
+      margin: 0;
+      height: 100vh;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      padding: 20px;
+    }
+
+    .container {
+      background: #dde7f7; /* lighter pale blue inside box */
+      padding: 30px;
+      border-radius: 16px;
+      max-width: 360px;
+      width: 100%;
+      box-shadow:
+        6px 6px 15px rgba(0, 0, 0, 0.12),
+        -4px -4px 10px rgba(255, 255, 255, 0.7);
+      border: 2px solid #444;
+      transform: perspective(1000px) rotateX(1deg);
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+    }
+
+    h2 {
+      font-weight: bold;
+      font-size: 24px;
+      color: #000;
+      margin-bottom: 25px;
+      text-shadow: 1px 1px #ccc;
+      text-align: center;
+      width: 100%;
+    }
+
+    form {
+      width: 100%;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+    }
+
+    label {
+      align-self: flex-start;
+      margin-left: 8%;
+      margin-bottom: 6px;
+      font-weight: bold;
+      font-size: 14px;
+      color: #000;
+    }
+
+    input[type="text"],
+    input[type="time"],
+    input[type="date"] {
+      width: 85%;
+      padding: 8px;
+      margin-bottom: 18px;
+      border-radius: 6px;
+      border: 2px solid #555;
+      font-size: 14px;
+      background-color: #fafafa;
+      box-shadow: inset 1px 1px 3px rgba(0,0,0,0.08);
+    }
+
+    button {
+      width: 85%;
+      background-color: #007bff;
+      color: white;
+      padding: 10px;
+      font-size: 15px;
+      font-weight: bold;
+      border: none;
+      border-radius: 6px;
+      cursor: pointer;
+      box-shadow: 2px 2px 6px rgba(0,0,0,0.15);
+      transition: 0.3s ease;
+      margin-top: 10px;
+    }
+
+    button:hover {
+      background-color: #0056b3;
+      transform: scale(1.02);
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h2>Edit Medicine</h2>
+    <form method="POST">
+      <label for="name">Medicine Name:</label>
+      <input type="text" id="name" name="name" value="{{ medicine.name }}" required>
+
+      <label for="dosage">Dosage:</label>
+      <input type="text" id="dosage" name="dosage" value="{{ medicine.dosage }}" required>
+
+      <label for="time">Time:</label>
+      <input type="time" id="time" name="time" value="{{ medicine.time }}" required>
+
+      <label for="start_date">Start Date:</label>
+      <input type="date" id="start_date" name="start_date" value="{{ medicine.start_date }}" required>
+
+      <label for="end_date">End Date:</label>
+      <input type="date" id="end_date" name="end_date" value="{{ medicine.end_date }}" required>
+
+      <button type="submit">Update Medicine</button>
+    </form>
+  </div>
+</body>
+</html>

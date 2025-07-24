@@ -1,0 +1,141 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>User Profile | MedTrack</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+</head>
+<body class="bg-gradient-to-br from-blue-100 via-green-100 to-blue-50 min-h-screen flex items-center justify-center px-4">
+
+  <div class="w-full max-w-3xl bg-white shadow-xl rounded-3xl p-10 border border-blue-200">
+    <h2 class="text-4xl font-bold text-blue-700 text-center mb-8">👤 User Profile</h2>
+
+    {% if user %}
+    <!-- Profile View Section -->
+    <div id="profileView" class="space-y-5 text-gray-800 text-lg">
+      <p><span class="text-blue-600 font-semibold">👤 Name:</span> {{ user.name or 'Not set' }}</p>
+      <p><span class="text-blue-600 font-semibold">📧 Email:</span> {{ user.email or 'Not set' }}</p>
+      <p><span class="text-blue-600 font-semibold">🎂 Age:</span> {{ user.age or 'Not set' }}</p>
+      <p><span class="text-blue-600 font-semibold">🚻 Gender:</span> {{ user.gender or 'Not set' }}</p>
+      <p><span class="text-blue-600 font-semibold">🩸 Blood Group:</span> {{ user.blood_group or 'Not set' }}</p>
+      <p><span class="text-blue-600 font-semibold">🩺 Medical Conditions:</span> {{ user.medical_conditions or 'None' }}</p>
+      <p><span class="text-blue-600 font-semibold">💊 Habits:</span>
+        {% if user.smoking %}🚬 Smoking {% endif %}
+        {% if user.drinking %}🍺 Drinking {% endif %}
+        {% if not user.smoking and not user.drinking %}None{% endif %}
+      </p>
+
+<div class="text-center">
+  <!-- Edit Button -->
+  <button onclick="toggleEdit()" class="mt-4 bg-blue-600 text-white px-6 py-2 rounded-full font-semibold hover:bg-blue-700 transition">
+    Edit Profile
+  </button>
+
+  <!-- Back to Dashboard Button -->
+  <div class="mt-3">
+    <a href="{{ url_for('dashboard') }}">
+      <button type="button" class="bg-gray-500 text-white px-4 py-1 text-sm rounded-full font-medium hover:bg-gray-600 transition">
+        ← Back to Dashboard
+      </button>
+    </a>
+  </div>
+
+  <!-- Logout Button -->
+  <div class="mt-2">
+    <a href="{{ url_for('logout') }}">
+      <button type="button" class="bg-red-500 text-white px-4 py-1 text-sm rounded-full font-medium hover:bg-red-600 transition">
+        🔒 Logout
+      </button>
+    </a>
+  </div>
+</div>
+
+    </div>
+
+    <!-- Edit Form -->
+<form id="profileEdit" action="/save_user" method="POST" class="space-y-4 hidden mt-6 text-gray-800">
+  <div>
+    <label for="name" class="block text-sm font-medium mb-1">Full Name</label>
+    <input type="text" id="name" name="name" value="{{ user.name }}" required class="w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-blue-300">
+  </div>
+
+  <div>
+    <label for="email" class="block text-sm font-medium mb-1">Email</label>
+    <input type="email" id="email" name="email" value="{{ user.email }}" required class="w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-blue-300">
+  </div>
+
+  <div>
+    <label for="age" class="block text-sm font-medium mb-1">Age</label>
+    <input type="number" id="age" name="age" value="{{ user.age }}" class="w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-blue-300">
+  </div>
+
+  <div>
+    <label for="gender" class="block text-sm font-medium mb-1">Gender</label>
+    <select id="gender" name="gender" class="w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-blue-300">
+      <option value="" disabled>Select Gender</option>
+      <option value="Male" {% if user.gender == 'Male' %}selected{% endif %}>Male</option>
+      <option value="Female" {% if user.gender == 'Female' %}selected{% endif %}>Female</option>
+      <option value="Other" {% if user.gender == 'Other' %}selected{% endif %}>Other</option>
+    </select>
+  </div>
+
+  <div>
+    <label for="blood_group" class="block text-sm font-medium mb-1">Blood Group</label>
+    <input type="text" id="blood_group" name="blood_group" value="{{ user.blood_group }}" class="w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-blue-300">
+  </div>
+
+  <div>
+    <label for="medical_conditions" class="block text-sm font-medium mb-1">Medical Conditions</label>
+    <textarea id="medical_conditions" name="medical_conditions" class="w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-blue-300">{{ user.medical_conditions }}</textarea>
+  </div>
+
+  <div class="flex gap-6 items-center">
+    <label class="flex items-center gap-2">
+      <input type="checkbox" name="smoking" {% if user.smoking %}checked{% endif %}> 🚬 Smoking
+    </label>
+    <label class="flex items-center gap-2">
+      <input type="checkbox" name="drinking" {% if user.drinking %}checked{% endif %}> 🍺 Drinking
+    </label>
+  </div>
+
+  <div class="flex justify-end gap-3 pt-2">
+    <button type="submit" class="bg-blue-600 text-white px-6 py-2 rounded-full font-semibold hover:bg-blue-700">Save</button>
+    <button type="button" onclick="toggleEdit()" class="bg-gray-400 text-white px-6 py-2 rounded-full hover:bg-gray-500">Cancel</button>
+  </div>
+</form>
+
+    {% else %}
+    <!-- New User Form -->
+    <form action="/save_user" method="POST" class="space-y-4 text-gray-800">
+      <input type="text" name="name" placeholder="Full Name" required class="w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-blue-300">
+      <input type="email" name="email" placeholder="Email" required class="w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-blue-300">
+      <input type="number" name="age" placeholder="Age" class="w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-blue-300">
+      <select name="gender" class="w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-blue-300">
+        <option value="" disabled selected>Select Gender</option>
+        <option>Male</option>
+        <option>Female</option>
+        <option>Other</option>
+      </select>
+      <input type="text" name="blood_group" placeholder="Blood Group" class="w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-blue-300">
+      <textarea name="medical_conditions" placeholder="Medical Conditions" class="w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-blue-300"></textarea>
+      <div class="flex gap-6 items-center">
+        <label><input type="checkbox" name="smoking"> 🚬 Smoking</label>
+        <label><input type="checkbox" name="drinking"> 🍺 Drinking</label>
+      </div>
+      <div class="text-center">
+        <button type="submit" class="bg-blue-600 text-white px-6 py-2 rounded-full font-semibold hover:bg-blue-700 transition">Save Profile</button>
+      </div>
+    </form>
+    {% endif %}
+  </div>
+
+  <!-- Toggle Script -->
+  <script>
+    function toggleEdit() {
+      document.getElementById('profileView').classList.toggle('hidden');
+      document.getElementById('profileEdit').classList.toggle('hidden');
+    }
+  </script>
+
+</body>
+</html>

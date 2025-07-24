@@ -1,0 +1,278 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>Dashboard</title>
+  <style>
+    body {
+      margin: 0;
+      font-family: Arial, sans-serif;
+      background-color: #e0f2f1; /* soft pastel teal */
+    }
+
+    .header {
+      background-color: #000;
+      color: #fff;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 15px 30px;
+    }
+
+    .header-left {
+      font-size: 20px;
+      font-weight: bold;
+    }
+
+    .header-right {
+      display: flex;
+      align-items: center;
+      gap: 20px;
+    }
+
+    .header-button {
+      background-color: transparent;
+      color: #fff;
+      border: 1px solid #fff;
+      padding: 8px 16px;
+      border-radius: 5px;
+      cursor: pointer;
+      transition: background 0.3s;
+    }
+
+    .header-button:hover {
+      background-color: #333;
+    }
+
+    .profile-icon {
+      width: 40px;
+      height: 40px;
+      border-radius: 50%;
+      background-color: #fff;
+      color: #000;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-weight: bold;
+      cursor: pointer;
+    }
+
+    .dashboard {
+      display: flex;
+      justify-content: space-between;
+      padding: 30px;
+      gap: 20px;
+    }
+
+    .box {
+      flex: 1;
+      background-color: white;
+      padding: 10px;
+      border-radius: 10px;
+      border: 2px solid #444; /* darker border */
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: flex-start;
+      height: 160px;
+      max-width: 300px;
+    }
+
+    .box h2 {
+      font-size: 20px;
+      font-weight: bold;
+      margin: 10px 0 10px;
+      text-align: center;
+    }
+
+    .dose-count {
+      font-size: 40px;
+      font-weight: bold;
+      color: #007bff;
+      margin-top: 20px;
+    }
+
+    .medicine-list {
+      list-style: none;
+      padding: 0;
+      margin: 0;
+      width: 100%;
+      max-width: 250px;
+    }
+
+    .tracker-item {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 5px 10px;
+      border-bottom: 1px solid #666; /* darker line */
+      font-size: 16px;
+    }
+
+    .medicine-list li {
+      margin: 2px 0;
+      font-weight: 500;
+    }
+
+    .checkbox-row {
+      display: flex;
+      justify-content: center;
+      gap: 8px;
+      margin-bottom: 5px;
+    }
+
+    .motivation {
+      font-size: 18px;
+      text-align: center;
+      color: #222;
+      line-height: 1.5;
+      padding: 0 10px;
+      margin-top: 8px;
+    }
+
+    .task-item {
+      background-color: #fff;
+      border-radius: 10px;
+      border: 2px solid #444; /* darker border */
+      padding: 15px;
+      margin-bottom: 15px;
+      display: flex;
+      align-items: center;
+      gap: 15px;
+    }
+  </style>
+</head>
+<body>
+  <div class="header">
+    <div class="header-left">
+      🩺MedTrack | Welcome, <span id="username">{{ username }}</span>
+    </div>
+    <div class="header-right">
+      <a href="{{ url_for('appointments') }}">
+  <button type="button" class="header-button">Appointments</button>
+</a>
+
+<a href="{{ url_for('doctor') }}">
+  <button type="button" class="header-button">Doctor</button>
+</a>
+
+      <div class="profile-icon" onclick="viewProfile()">👤</div>
+    </div>
+  </div>
+
+  <div class="dashboard">
+    <div class="box">
+      <h2>🗓️Today Doses</h2>
+      <div class="dose-count">{{ today_medicines | length }}</div>
+    </div>
+
+    <div class="box">
+      <h2>⌚Tracker</h2>
+      <ul class="medicine-list" id="medicineList">
+        {% for med in today_medicines %}
+        <li class="tracker-item">
+          <span>{{ med.name }}</span>
+          <input type="checkbox" />
+        </li>
+        {% endfor %}
+      </ul>
+    </div>
+
+    <div class="box">
+      <h2>🏆Motivation</h2>
+      <div class="motivation">
+        {{ motivation_quote }}
+      </div>
+    </div>
+  </div>
+
+  <div style="padding: 0 30px 30px 30px;">
+    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
+      <h2>Your Medications</h2>
+      <a href="/add-medicine">
+        <button style="padding: 8px 16px; background-color: #007bff; color: white; border: none; border-radius: 5px; cursor: pointer;">
+          + Add New
+        </button>
+      </a>
+    </div>
+
+    {% for med in medicines %}
+    <div style="background-color: #fff; border-radius: 10px; border: 2px solid #444; padding: 15px; margin-bottom: 15px;">
+      <p style="margin: 0; font-weight: bold;">{{ loop.index }}. {{ med.name }} - {{ med.dosage }}</p>
+      <p style="margin: 5px 0 10px 0;">{{ med.start_date }} to {{ med.end_date }} at {{ med.time }}</p>
+      <div style="display: flex; gap: 10px;">
+        <a href="/edit/{{ med.id }}">
+          <button style="padding: 5px 12px; background-color: #ffc107; border: none; border-radius: 4px;">Edit</button>
+        </a>
+        <a href="/delete/{{ med.id }}" onclick="return confirm('Are you sure you want to delete this medicine?');">
+          <button style="padding: 5px 12px; background-color: #dc3545; color: white; border: none; border-radius: 4px;">Delete</button>
+        </a>
+      </div>
+    </div>
+    {% endfor %}
+  </div>
+
+  <div style="padding: 0 30px 50px 30px;">
+    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
+      <h2>Today Tasks</h2>
+      <a href="/add-task">
+        <button style="padding: 8px 16px; background-color: #28a745; color: white; border: none; border-radius: 5px; cursor: pointer;">
+          + Add New
+        </button>
+      </a>
+    </div>
+
+    <div id="taskList">
+      {% for task in tasks if not task['completed'] %}
+      <div class="task-item">
+        <input type="checkbox" class="task-checkbox" data-task-id="{{ task['id'] }}" onchange="markCompleted(this)" />
+        <span style="flex: 1;">{{ task['title'] }} — {{ task['time'] }}</span>
+        <a href="/edit-task/{{ task['id'] }}">
+          <button style="padding: 5px 12px; background-color: #ffc107; border: none; border-radius: 4px;">Edit</button>
+        </a>
+        <a href="/delete-task/{{ task['id'] }}" onclick="return confirm('Are you sure you want to delete this task?');">
+          <button style="padding: 5px 12px; background-color: #dc3545; color: white; border: none; border-radius: 4px;">Delete</button>
+        </a>
+      </div>
+      {% endfor %}
+    </div>
+
+    <div id="completedTaskList" style="margin-top: 30px;">
+      {% for task in tasks if task['completed'] %}
+      <div class="task-item" style="background-color: #e2ffe2; border-radius: 10px; border: 2px dashed #28a745;">
+        <input type="checkbox" checked disabled />
+        <span style="flex: 1; text-decoration: line-through;">{{ task['title'] }} — {{ task['time'] }}</span>
+        <a href="/edit-task/{{ task['id'] }}">
+          <button style="padding: 5px 12px; background-color: #ffc107; border: none; border-radius: 4px;">Edit</button>
+        </a>
+        <a href="/delete-task/{{ task['id'] }}" onclick="return confirm('Are you sure you want to delete this task?');">
+          <button style="padding: 5px 12px; background-color: #dc3545; color: white; border: none; border-radius: 4px;">Delete</button>
+        </a>
+      </div>
+      {% endfor %}
+    </div>
+  </div>
+
+<footer style="background-color: #2d2d2d; color: #ccc; padding: 20px 0; margin-top: 60px;">
+  <div style="max-width: 1200px; margin: 0 auto; text-align: center; padding: 0 20px;">
+    <p style="margin: 5px 0;">&copy; 2025 <span style="color: #fff; font-weight: bold;">MedTrack</span>. All rights reserved.</p>
+    <p style="font-size: 14px; margin: 5px 0;">Crafted with 💊 for better health tracking.</p>
+  </div>
+</footer>
+
+
+
+<script>
+  function markCompleted(checkbox) {
+    const taskId = checkbox.getAttribute("data-task-id");
+    fetch(`/complete-task/${taskId}`, { method: 'POST' }).then(() => location.reload());
+  }
+
+  function viewProfile() {
+    window.location.href = "/profile"; // Redirects to profile page
+  }
+</script>
+
+
+</body>
+</html>
