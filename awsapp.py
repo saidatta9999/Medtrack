@@ -14,7 +14,7 @@ dynamodb = boto3.resource('dynamodb', region_name=region)
 sns = boto3.client('sns', region_name=region)
 
 # Replace with your actual topic ARN and AWS account ID
-sns_topic_arn = 'arn:aws:sns:us-east-1:YOUR_ACCOUNT_ID:MedTrackAlerts'
+sns_topic_arn = 'arn:aws:sns:us-east-1:253490749648:medtrack-alerts'
 
 # DynamoDB Tables
 users_table = dynamodb.Table('medtrack_users')
