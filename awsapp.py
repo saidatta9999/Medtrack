@@ -119,7 +119,6 @@ def add_medicine():
         dose_time = request.form["dose_time"]
         start_date = request.form["start_date"]
         end_date = request.form["end_date"]
-        frequency = request.form["frequency"]
 
         medications_table.put_item(Item={
             "user_id": session["user_id"],
@@ -129,7 +128,6 @@ def add_medicine():
             "dose_time": dose_time,
             "start_date": start_date,
             "end_date": end_date,
-            "frequency": frequency
         })
 
         user_id = session["user_id"]
