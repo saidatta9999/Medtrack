@@ -3,7 +3,6 @@ from datetime import datetime, date, timedelta
 import boto3
 import uuid
 import random
-from werkzeug.utils import secure_filename
 
 app = Flask(__name__)
 app.secret_key = 'your_secret_key'
@@ -13,7 +12,7 @@ region = 'us-east-1'
 dynamodb = boto3.resource('dynamodb', region_name=region)
 sns = boto3.client('sns', region_name=region)
 
-# Replace with your actual topic ARN and AWS account ID
+# Your SNS Topic ARN
 sns_topic_arn = 'arn:aws:sns:us-east-1:253490749648:medtrack-alerts'
 
 # DynamoDB Tables
@@ -27,6 +26,7 @@ doctor_list_table = dynamodb.Table('medtrack_doctor_list')
 @app.route('/')
 def home():
     return render_template('home.html')
+
 
 @app.route('/signup', methods=['GET', 'POST'])
 def signup():
@@ -47,10 +47,15 @@ def signup():
         session['user_id'] = user_id
         session['email'] = email
 
-        sns.subscribe(TopicArn=sns_topic_arn, Protocol='email', Endpoint=email)
+        # Subscribe to SNS topic
+        try:
+            sns.subscribe(TopicArn=sns_topic_arn, Protocol='email', Endpoint=email)
+        except Exception as e:
+            print("SNS subscription failed:", e)
 
         return redirect('/dashboard')
     return render_template('signup.html')
+
 
 @app.route('/login', methods=['GET', 'POST'])
 def login():
@@ -70,8 +75,9 @@ def login():
             session['email'] = user['email']
             return redirect('/dashboard')
         else:
-            return "Invalid credentials"
+            flash("Invalid credentials", "danger")
     return render_template('login.html')
+
 
 @app.route('/dashboard')
 def dashboard():
@@ -100,6 +106,7 @@ def dashboard():
     return render_template("dashboard.html", username=session['user'], medicines=meds,
                            today_medicines=today_meds, tasks=tasks, motivation_quote=motivation_quote)
 
+
 @app.route('/add-medicine', methods=['GET', 'POST'])
 def add_medicine():
     if 'user_id' not in session:
@@ -118,31 +125,28 @@ def add_medicine():
         }
         medicines_table.put_item(Item=data)
 
-        # 📨 Informative email message
-        email_message = f"""
-Hello,
+        # Send email via SNS
+        try:
+            email_message = f"""
+Hello {session['user']},
 
 ✅ A new medicine has been added to your MedTrack dashboard.
 
-🩺 **Medicine Details:**
-- Name: {data['name']}
-- Dosage: {data['dosage']}
-- Time to take: {data['time']}
-- Start Date: {data['start_date']}
-- End Date: {data['end_date']}
+🩺 Medicine: {data['name']}
+Dosage: {data['dosage']}
+Time: {data['time']}
+Start: {data['start_date']} | End: {data['end_date']}
 
-We’ll remind you when it’s time to take your medicine.
-
-Stay healthy!  
+Stay healthy!
 – MedTrack Team
 """
-
-        # Send via SNS
-        sns.publish(
-            TopicArn=sns_topic_arn,
-            Subject='🆕 New Medicine Added to MedTrack',
-            Message=email_message
-        )
+            sns.publish(
+                TopicArn=sns_topic_arn,
+                Subject='🆕 New Medicine Added',
+                Message=email_message
+            )
+        except Exception as e:
+            print("SNS publish failed:", e)
 
         return redirect('/dashboard')
 
@@ -171,6 +175,7 @@ def edit_medicine(med_id):
     med = medicines_table.get_item(Key={'id': med_id})['Item']
     return render_template('edit_medicine.html', medicine=med)
 
+
 @app.route('/delete/<string:med_id>')
 def delete_medicine(med_id):
     if 'user_id' not in session:
@@ -178,6 +183,7 @@ def delete_medicine(med_id):
 
     medicines_table.delete_item(Key={'id': med_id})
     return redirect('/dashboard')
+
 
 @app.route('/add-task', methods=['GET', 'POST'])
 def add_task():
@@ -199,6 +205,7 @@ def add_task():
 
     return render_template('add_task.html')
 
+
 @app.route('/edit-task/<string:task_id>', methods=['GET', 'POST'])
 def edit_task(task_id):
     if 'user_id' not in session:
@@ -215,10 +222,12 @@ def edit_task(task_id):
     task = tasks_table.get_item(Key={'user_id': session['user_id'], 'task_id': task_id})['Item']
     return render_template('edit_task.html', task=task)
 
+
 @app.route('/delete-task/<string:task_id>')
 def delete_task(task_id):
     tasks_table.delete_item(Key={'user_id': session['user_id'], 'task_id': task_id})
     return redirect('/dashboard')
+
 
 @app.route('/complete-task/<string:task_id>', methods=['POST'])
 def complete_task(task_id):
@@ -230,8 +239,19 @@ def complete_task(task_id):
         UpdateExpression='SET completed = :val',
         ExpressionAttributeValues={':val': not current_completed}
     )
-    sns.publish(TopicArn=sns_topic_arn, Subject='Task Completed', Message='A task status changed in MedTrack.')
+
+    # Send SNS email
+    try:
+        sns.publish(
+            TopicArn=sns_topic_arn,
+            Subject='📌 Task Status Updated',
+            Message=f"Hello {session['user']},\n\nA task was marked as {'completed' if not current_completed else 'incomplete'} in your MedTrack dashboard."
+        )
+    except Exception as e:
+        print("SNS publish failed:", e)
+
     return '', 204
+
 
 @app.route('/doctor')
 def doctor():
@@ -239,6 +259,7 @@ def doctor():
         return redirect('/login')
     doc = doctor_details_table.get_item(Key={'user_id': session['user_id']})
     return render_template('doctor.html', doctor=doc.get('Item'))
+
 
 @app.route('/save_doctor', methods=['POST'])
 def save_doctor():
@@ -256,6 +277,7 @@ def save_doctor():
     })
     return redirect('/doctor')
 
+
 @app.route("/appointments", methods=["GET"])
 def appointments():
     if "user_id" not in session:
@@ -267,6 +289,7 @@ def appointments():
 
     return render_template("appointments.html", doctors=doctors, specialities=specialities)
 
+
 @app.route("/book-appointment", methods=["POST"])
 def book_appointment():
     doctor_name = request.form.get("doctor_name")
@@ -275,12 +298,14 @@ def book_appointment():
     flash(f"✅ Appointment booked with Dr. {doctor_name} on {appointment_date}!", "success")
     return redirect(url_for("appointments"))
 
+
 @app.route('/profile')
 def profile():
     if 'user_id' not in session:
         return redirect('/login')
     prof = users_table.get_item(Key={'user_id': session['user_id']})
     return render_template('profile.html', user=prof.get('Item'))
+
 
 @app.route('/save_user', methods=['POST'])
 def save_user():
@@ -300,10 +325,12 @@ def save_user():
     })
     return redirect('/profile')
 
+
 @app.route('/logout')
 def logout():
     session.clear()
     return redirect('/')
+
 
 if __name__ == '__main__':
     app.run(debug=True, host='0.0.0.0', port=5000)
