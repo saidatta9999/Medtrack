@@ -6,7 +6,7 @@
   <style>
     body {
       font-family: Arial, sans-serif;
-      background: #b0bedc; /* slightly darker pale blue */
+      background: #b0bedc;
       margin: 0;
       height: 100vh;
       display: flex;
@@ -16,7 +16,7 @@
     }
 
     form {
-      background: #dde7f7; /* lighter pale blue inside box */
+      background: #dde7f7;
       padding: 30px;
       border-radius: 16px;
       max-width: 360px;
@@ -88,14 +88,14 @@
   <form method="POST">
     <h2>Add New Medicine</h2>
 
-    <label for="name">Medicine Name</label>
-    <input type="text" id="name" name="name" required>
+    <label for="medicine_name">Medicine Name</label>
+    <input type="text" id="medicine_name" name="medicine_name" required>
 
-    <label for="dosage">Dose Count</label>
-    <input type="text" id="dosage" name="dosage" required>
+    <label for="dose_count">Dose Count</label>
+    <input type="text" id="dose_count" name="dose_count" required>
 
-    <label for="time">Time (e.g., 08:00 AM)</label>
-    <input type="time" id="time" name="time" required>
+    <label for="dose_time">Time (e.g., 08:00 AM)</label>
+    <input type="time" id="dose_time" name="dose_time" required>
 
     <label for="start_date">Start Date</label>
     <input type="date" id="start_date" name="start_date" required>
