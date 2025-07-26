@@ -107,51 +107,75 @@ def dashboard():
                            today_medicines=today_meds, tasks=tasks, motivation_quote=motivation_quote)
 
 
-@app.route('/add-medicine', methods=['GET', 'POST'])
+@app.route("/add-medicine", methods=["GET", "POST"])
 def add_medicine():
-    if 'user_id' not in session:
-        return redirect('/login')
+    if "user_id" not in session:
+        return redirect(url_for("login"))
 
-    if request.method == 'POST':
-        med_id = str(uuid.uuid4())
-        data = {
-            'id': med_id,
-            'user_id': session['user_id'],
-            'name': request.form['name'],
-            'dosage': request.form['dosage'],
-            'time': request.form['time'],
-            'start_date': request.form['start_date'],
-            'end_date': request.form['end_date']
-        }
-        medicines_table.put_item(Item=data)
+    if request.method == "POST":
+        medicine_id = str(uuid.uuid4())
+        medicine_name = request.form["medicine_name"]
+        dose_count = request.form["dose_count"]
+        dose_time = request.form["dose_time"]
+        start_date = request.form["start_date"]
+        end_date = request.form["end_date"]
+        frequency = request.form["frequency"]
 
-        # Send email via SNS
-        try:
-            email_message = f"""
-Hello {session['user']},
+        medications_table.put_item(Item={
+            "user_id": session["user_id"],
+            "medicine_id": medicine_id,
+            "medicine_name": medicine_name,
+            "dose_count": dose_count,
+            "dose_time": dose_time,
+            "start_date": start_date,
+            "end_date": end_date,
+            "frequency": frequency
+        })
 
-✅ A new medicine has been added to your MedTrack dashboard.
+        user_id = session["user_id"]
+        user_response = users_table.get_item(Key={'user_id': user_id})
+        user = user_response.get("Item")
 
-🩺 Medicine: {data['name']}
-Dosage: {data['dosage']}
-Time: {data['time']}
-Start: {data['start_date']} | End: {data['end_date']}
+        if user and "email" in user:
+            user_email = user["email"]
+            try:
+                already_subscribed = user.get("sns_subscribed", False)
 
-Stay healthy!
-– MedTrack Team
-"""
-            sns.publish(
-                TopicArn=sns_topic_arn,
-                Subject='🆕 New Medicine Added',
-                Message=email_message
-            )
-        except Exception as e:
-            print("SNS publish failed:", e)
+                if not already_subscribed:
+                    sns_client.subscribe(
+                        TopicArn=sns_topic_arn,
+                        Protocol='email',
+                        Endpoint=user_email
+                    )
+                    print(f"✅ First-time SNS subscription email sent to {user_email}")
 
-        return redirect('/dashboard')
+                    users_table.update_item(
+                        Key={'user_id': user_id},
+                        UpdateExpression="set sns_subscribed = :val",
+                        ExpressionAttributeValues={':val': True}
+                    )
+                else:
+                    print(f"✅ User {user_email} already subscribed, skipping subscription")
 
-    return render_template('add_medicine.html')
+                sns_client.publish(
+                    TopicArn=sns_topic_arn,
+                    Subject="💊 MedTrack - Medicine Added",
+                    Message=(
+                        f"Hello {user['name']},\n\n"
+                        f"You have successfully added the medicine '{medicine_name}' to your MedTrack account.\n"
+                        f"Start Date: {start_date}\n"
+                        f"End Date: {end_date}\n"
+                        f"Dose Time: {dose_time}\n\n"
+                        f"Stay healthy!\n– MedTrack"
+                    )
+                )
 
+            except Exception as e:
+                print("❌ SNS Error:", str(e))
+
+        return redirect(url_for("dashboard"))
+
+    return render_template("add_medicine.html")
 
 @app.route('/edit/<string:med_id>', methods=['GET', 'POST'])
 def edit_medicine(med_id):
